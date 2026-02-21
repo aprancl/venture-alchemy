@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spec Analysis Review</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --bg-surface: #161b22;
+    --bg-elevated: #1c2128;
+    --border: #30363d;
+    --border-active: #58a6ff;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-heading: #f0f6fc;
+    --amber: #d29922;
+    --amber-bg: rgba(210, 153, 34, 0.12);
+    --green: #3fb950;
+    --green-bg: rgba(63, 185, 80, 0.12);
+    --red: #f85149;
+    --red-bg: rgba(248, 81, 73, 0.12);
+    --purple: #bc8cff;
+    --purple-bg: rgba(188, 140, 255, 0.12);
+    --blue: #58a6ff;
+    --blue-bg: rgba(88, 166, 255, 0.12);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; color: var(--text-heading); font-weight: 600; }
+  .header-meta { display: flex; gap: 16px; font-size: 13px; color: var(--text-muted); }
+  .header-meta span { display: flex; align-items: center; gap: 4px; }
+
+  /* Dashboard */
+  .dashboard {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .stats { display: flex; gap: 24px; }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .stat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+  /* Filter bar */
+  .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filter-tabs { display: flex; gap: 2px; background: var(--bg); border-radius: 6px; padding: 2px; }
+  .filter-tab {
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .filter-tab:hover { color: var(--text); }
+  .filter-tab.active { background: var(--bg-elevated); color: var(--text); }
+  .filter-tab .count {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 11px;
+    background: var(--border);
+    padding: 0 6px;
+    border-radius: 10px;
+  }
+
+  select.severity-filter {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 28px 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+
+  /* Main layout */
+  .main { display: flex; height: calc(100vh - 140px); overflow: hidden; }
+
+  /* Left panel -- spec content */
+  .spec-panel {
+    flex: 6;
+    overflow-y: auto;
+    padding: 24px;
+    border-right: 1px solid var(--border);
+  }
+  .spec-content {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .spec-content h1, .spec-content h2, .spec-content h3, .spec-content h4 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--text-heading);
+    margin: 20px 0 8px;
+    line-height: 1.3;
+  }
+  .spec-content h1 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .spec-content h2 { font-size: 18px; }
+  .spec-content h3 { font-size: 15px; }
+  .spec-content h4 { font-size: 14px; }
+  .spec-content strong { color: var(--text-heading); }
+  .spec-content code {
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  .spec-content ul, .spec-content ol { padding-left: 24px; margin: 4px 0; }
+  .spec-content li { margin: 2px 0; }
+
+  /* Annotated section */
+  .annotated-line {
+    border-left: 3px solid transparent;
+    padding-left: 8px;
+    margin-left: -11px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 0 4px 4px 0;
+  }
+  .annotated-line:hover { background: var(--bg-elevated); }
+  .annotated-line.severity-warning { border-left-color: var(--amber); }
+  .annotated-line.severity-critical { border-left-color: var(--purple); }
+  .annotated-line.severity-suggestion { border-left-color: var(--blue); }
+  .annotated-line.status-approved { border-left-color: var(--green); }
+  .annotated-line.status-rejected { border-left-color: var(--red); }
+  .annotated-line.selected { background: var(--bg-elevated); }
+
+  .annotation-marker {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  .annotation-marker.severity-warning { background: var(--amber-bg); color: var(--amber); }
+  .annotation-marker.severity-critical { background: var(--purple-bg); color: var(--purple); }
+  .annotation-marker.severity-suggestion { background: var(--blue-bg); color: var(--blue); }
+
+  /* Editable blocks */
+  [contenteditable="true"] {
+    outline: none;
+    border: 1px dashed transparent;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    border-radius: 3px;
+    transition: border-color 0.15s;
+  }
+  [contenteditable="true"]:focus {
+    border-color: var(--border-active);
+    background: var(--bg-elevated);
+  }
+
+  /* Right panel -- findings */
+  .findings-panel {
+    flex: 4;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-surface);
+  }
+  .findings-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .finding-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .finding-card:hover { border-color: var(--border-active); }
+  .finding-card.selected { border-color: var(--border-active); box-shadow: 0 0 0 1px var(--border-active); }
+  .finding-card.status-approved { border-left: 3px solid var(--green); }
+  .finding-card.status-rejected { border-left: 3px solid var(--red); }
+
+  .finding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .finding-id { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+  .finding-title { font-size: 14px; font-weight: 600; color: var(--text-heading); margin-bottom: 4px; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .badge-critical { background: var(--purple-bg); color: var(--purple); }
+  .badge-warning { background: var(--amber-bg); color: var(--amber); }
+  .badge-suggestion { background: var(--blue-bg); color: var(--blue); }
+
+  .category-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .finding-issue {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .finding-detail { margin-bottom: 10px; }
+  .finding-detail-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .finding-detail-text {
+    font-size: 13px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--bg-elevated);
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .finding-detail-text.current { border-left: 3px solid var(--red); }
+  .finding-detail-text.proposed { border-left: 3px solid var(--green); }
+
+  .finding-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s;
+    background: var(--bg-elevated);
+    color: var(--text);
+  }
+  .btn:hover { border-color: var(--text-muted); }
+  .btn-approve { border-color: var(--green); color: var(--green); }
+  .btn-approve:hover { background: var(--green-bg); }
+  .btn-reject { border-color: var(--red); color: var(--red); }
+  .btn-reject:hover { background: var(--red-bg); }
+  .btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .comment-area {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    margin-top: 8px;
+  }
+  .comment-area:focus { outline: none; border-color: var(--border-active); }
+
+  .status-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .status-pending { background: var(--amber-bg); color: var(--amber); }
+  .status-approved { background: var(--green-bg); color: var(--green); }
+  .status-rejected { background: var(--red-bg); color: var(--red); }
+
+  .finding-location {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  /* Prompt output panel */
+  .prompt-panel {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+  .prompt-panel.hidden { display: none; }
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .prompt-header h3 { font-size: 14px; color: var(--text-heading); }
+  .prompt-actions { display: flex; gap: 8px; }
+  .prompt-content {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+
+  /* Notification toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .main { flex-direction: column; height: auto; }
+    .spec-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
+    .findings-panel { max-height: 50vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <h1 id="spec-name"></h1>
+  </div>
+  <div class="header-meta">
+    <span id="depth-level"></span>
+    <span id="analyzed-at"></span>
+  </div>
+</header>
+
+<!-- Dashboard -->
+<div class="dashboard">
+  <div class="stats" id="stats"></div>
+  <div class="filters">
+    <div class="filter-tabs" id="status-filters"></div>
+    <select class="severity-filter" id="severity-filter">
+      <option value="all">All Severities</option>
+      <option value="critical">Critical</option>
+      <option value="warning">Warning</option>
+      <option value="suggestion">Suggestion</option>
+    </select>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+  <div class="spec-panel">
+    <div class="spec-content" id="spec-content"></div>
+  </div>
+  <div class="findings-panel">
+    <div class="findings-list" id="findings-list"></div>
+  </div>
+</div>
+
+<!-- Prompt output -->
+<div class="prompt-panel hidden" id="prompt-panel">
+  <div class="prompt-header">
+    <h3>Prompt from Approved Changes (<span id="approved-count">0</span>)</h3>
+    <div class="prompt-actions">
+      <button class="btn btn-primary" onclick="copyPrompt()">Copy Prompt</button>
+      <button class="btn" onclick="downloadSpec()">Download Modified Spec</button>
+    </div>
+  </div>
+  <div class="prompt-content" id="prompt-content"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// === DATA INJECTION ===
+const SPEC_CONTENT = {"path":"/home/aprancl/repos/venture-alchemy/specs/startup-idea-generator-SPEC.md","name":"Startup Idea Generator","depthLevel":"Detailed","analyzedAt":"2026-02-21 14:30","content":"# Startup Idea Generator PRD\n\n**Version**: 1.0\n**Author**: aprancl\n**Date**: 2026-02-21\n**Status**: Draft\n**Spec Type**: New Product\n**Spec Depth**: Detailed Specifications\n**Description**: A Claude Code plugin that helps CC users generate startup and side-project ideas through market-first discovery, structured validation, and execution planning. Modeled after the agent-alchemy SDD tools workflow pattern.\n\n---\n\n## 1. Executive Summary\n\nStartup Idea Generator is a Claude Code plugin that provides a structured, interview-driven workflow for discovering profitable startup and side-project ideas. It takes a market-first approach \u2014 identifying suitable markets before generating ideas \u2014 and uses web research, deep user profiling, and a formal scoring rubric to produce high-quality, evidence-backed ideas rather than generic \"AI slop.\" The plugin consists of three skills (`generate-idea`, `validate-idea`, `plan-execution`) and a dedicated `market-researcher` agent, all following the agent-alchemy plugin architecture pattern.\n\n## 2. Problem Statement\n\n### 2.1 The Problem\n\nDevelopers and aspiring entrepreneurs who have access to powerful AI-assisted development tools (like Claude Code with agent-alchemy) are fully capable of *building* software \u2014 but struggle to identify *what* to build. They fall into a cycle of starting projects based on initial enthusiasm, getting 70% through implementation, then losing confidence in the idea's value and abandoning it. There is no structured, evidence-based tool for market-first idea discovery tailored to solo developers.\n\n### 2.2 Current State\n\nCurrently, developers looking for project ideas rely on:\n- **Generic brainstorming with AI**: Produces \"AI slop\" \u2014 obvious, oversaturated ideas (yet another todo app, AI wrapper, etc.)\n- **Browsing communities**: Reddit, Indie Hackers, Twitter \u2014 time-consuming and scattered\n- **Personal inspiration**: Waiting for a \"eureka moment\" that may never come\n- **Copying competitors**: Building clones without understanding market dynamics\n\nNone of these approaches provide structured market analysis, personal fit assessment, or evidence-backed validation.\n\n### 2.3 Impact Analysis\n\nWithout a solution, developers continue to:\n- Waste weeks/months building projects they abandon\n- Lose confidence in their ability to identify profitable opportunities\n- Miss actual market opportunities because they lack a systematic discovery process\n- Underutilize powerful tools (CC + agent-alchemy) that could rapidly build validated ideas\n\n### 2.4 Business Value\n\nThis plugin:\n- Breaks the \"build and abandon\" cycle by providing confidence through evidence\n- Creates a natural upstream complement to agent-alchemy SDD tools (ideas flow into specs flow into tasks flow into code)\n- Serves a broad audience of developers looking to monetize their skills\n- Establishes the venture-alchemy plugin as the entrepreneurial counterpart to agent-alchemy\n\n## 3. Goals & Success Metrics\n\n### 3.1 Primary Goals\n\n1. Reliably generate actionable, non-generic startup/side-project ideas backed by market evidence\n2. Provide a structured pipeline from market discovery through idea validation to execution planning\n3. Give users confidence that they are building something with real revenue potential\n\n### 3.2 Success Metrics\n\n| Metric | Current Baseline | Target | Measurement Method | Timeline |\n|--------|------------------|--------|-------------------|----------|\n| Idea specificity | N/A (no tool) | Ideas reference specific markets, competitors, and pricing models | Manual review of generated ideas | MVP |\n| Anti-slop effectiveness | N/A | <20% of ideas overlap with common \"generic AI suggestions\" | Compare output against known generic idea lists | MVP |\n| Pipeline completion | N/A | User can go from /generate-idea to a concrete execution plan in one session | End-to-end workflow testing | Phase 3 |\n| User confidence | Low (abandonment at 70%) | User proceeds to spec creation (via agent-alchemy) for generated ideas | Track pipeline handoff to /create-spec | Post-MVP |\n\n### 3.3 Non-Goals\n\n- This plugin does NOT write code or generate technical implementations\n- This plugin does NOT replace agent-alchemy SDD tools \u2014 it feeds into them\n- This plugin does NOT guarantee business success \u2014 it provides structured analysis to improve odds\n- This plugin is NOT a real-time market data platform \u2014 it uses web search as a best-effort intelligence source\n\n## 4. User Research\n\n### 4.1 Target Users\n\n#### Primary Persona: The Side-Project Developer\n- **Role/Description**: A developer who codes professionally or as a hobby and wants to monetize side projects\n- **Goals**: Find a profitable project idea that matches their skills and available time, and actually ship it\n- **Pain Points**: Gets stuck in ideation loops, starts projects and abandons them, generates \"AI slop\" ideas when brainstorming with LLMs, lacks market awareness\n- **Context**: Uses Claude Code as their primary development environment, has access to agent-alchemy tools for implementation\n\n#### Secondary Persona: The Aspiring Technical Entrepreneur\n- **Role/Description**: Someone with technical skills who wants to build a real startup but hasn't found the right opportunity\n- **Goals**: Identify a market with real demand, build a validated MVP, and launch a product that generates revenue\n- **Pain Points**: Doesn't know how to systematically evaluate markets, lacks confidence in idea selection, doesn't know who to talk to for validation\n\n#### Secondary Persona: The Freelance Developer\n- **Role/Description**: Working developer between contracts looking for a product to build during downtime\n- **Goals**: Create a recurring-revenue product that reduces dependence on contract work\n- **Pain Points**: Limited time for market research, needs ideas that are buildable solo in weeks not months\n\n### 4.2 User Journey Map\n\n```\n[Frustrated with current ideas] --> [Invoke /generate-idea] --> [Complete profile interview]\n    --> [Review market analysis] --> [Score and rank ideas] --> [Select top idea]\n    --> [/validate-idea for deeper analysis] --> [/plan-execution for roadmap]\n    --> [Hand off to /create-spec via agent-alchemy] --> [Build with confidence]\n```\n\n**Typical Flow:**\n1. User invokes `/generate-idea` from Claude Code\n2. Interview-style Q&A gathers skills, experience, interests, network, constraints\n3. Plugin identifies suitable markets via web research\n4. Ideas are generated per market, scored, and ranked\n5. User reviews ranked ideas with supporting evidence\n6. User selects an idea to validate deeper (`/validate-idea`)\n7. Validated idea gets an execution plan (`/plan-execution`)\n8. Execution plan feeds into agent-alchemy `/create-spec` for implementation\n\n## 5. Functional Requirements\n\n### 5.1 Feature: generate-idea (Hub Skill)\n\n**Priority**: P0 (Critical)\n\n#### User Stories\n\n**US-001**: As a developer looking for a side project, I want to go through a structured interview about my skills, interests, and constraints so that the tool can generate personalized, non-generic startup ideas.\n\n**Acceptance Criteria**:\n- [ ] Skill is invocable via `/generate-idea` slash command\n- [ ] Interview gathers: technical skills, domain experience, available time, budget constraints, income goals, interests, risk tolerance\n- [ ] Interview uses `AskUserQuestion` for all user interactions (no text-based prompts)\n- [ ] Interview provides recommended answers/options for each question\n- [ ] User profile is stored internally and used to filter/personalize all subsequent idea generation\n\n**US-002**: As a user, I want the tool to identify markets suitable for me before generating ideas so that ideas are grounded in real market opportunities.\n\n**Acceptance Criteria**:\n- [ ] After profiling, the skill identifies 3-5 markets based on user profile and web research\n- [ ] Each market is presented with: market description, size estimate, trend direction, and why it fits the user\n- [ ] User can approve, reject, or suggest alternative markets\n- [ ] Market analysis uses the `market-researcher` agent for web-based intelligence\n\n**US-003**: As a user, I want each generated idea to come with a structured document including market evidence so that I can make informed decisions.\n\n**Acceptance Criteria**:\n- [ ] Each idea is output as a markdown file in `ideas/{market-slug}/idea-NNN.md`\n- [ ] Each market has a `MARKET.md` file with the market analysis\n- [ ] Idea document includes: idea name, description, target customer, revenue model, competitive landscape, estimated time to MVP, personal fit assessment\n- [ ] Idea document references specific competitors, pricing data points, and market evidence gathered via web research\n\n**US-004**: As a user, I want ideas to be scored and ranked using a transparent rubric so that I can compare them objectively.\n\n**Acceptance Criteria**:\n- [ ] Each idea is scored on 4 dimensions (1-5 scale):\n  - Revenue Potential: market size, pricing model viability, willingness to pay\n  - Solo Buildability: technical complexity, time to MVP, maintenance burden\n  - Market Validation: evidence of demand, competitor gaps, trend alignment\n  - Personal Fit: skills match, interest level, network advantage\n- [ ] Composite score is a weighted average; user can adjust weights before scoring\n- [ ] Ideas are presented in ranked order with scores visible\n- [ ] Scoring rationale is included in each idea document\n\n**US-005**: As a user, I want the tool to actively filter out generic, oversaturated ideas so that I don't get \"AI slop.\"\n\n**Acceptance Criteria**:\n- [ ] Deep user profiling produces hyper-personalized ideas (not one-size-fits-all)\n- [ ] Every idea cites specific market evidence (competitor gaps, underserved niches, pricing data)\n- [ ] Contrarian filter rejects \"obvious\" ideas (generic SaaS, yet another X)\n- [ ] Freshness filter uses web search to check market saturation; flags ideas with 10+ established competitors\n- [ ] Ideas with high saturation are either filtered out or explicitly flagged with rationale\n\n**US-006**: As a user, I want the tool to help me identify people to talk to in my chosen market so that I can validate ideas through human connections.\n\n**Acceptance Criteria**:\n- [ ] Interview asks about the user's existing network in target markets\n- [ ] If user knows nobody in a market, the skill suggests outreach targets: relevant communities, subreddits, forums, Discord servers, industry events\n- [ ] Network suggestions are specific and actionable (not generic \"join a community\" advice)\n- [ ] This feature is optional \u2014 user can skip it for any given idea\n\n**Edge Cases**:\n- User has no clear skills or interests: Provide broader exploration questions and suggest \"skill-adjacent\" markets\n- Web search returns limited data for a niche market: Flag as \"emerging/unvalidated market\" rather than rejecting it\n- User wants ideas outside their skill set: Present with explicit \"learning curve\" assessment added to scoring\n\n---\n\n### 5.2 Feature: validate-idea\n\n**Priority**: P1 (High)\n\n#### User Stories\n\n**US-007**: As a user who has selected a promising idea, I want to deep-dive into its market viability so that I can decide whether to commit to building it.\n\n**Acceptance Criteria**:\n- [ ] Skill is invocable via `/validate-idea` and accepts an idea document path as input\n- [ ] Performs deeper web research on: competitors, pricing models, customer acquisition channels, market trends\n- [ ] Produces a validation report with: SWOT analysis, competitor comparison table, revenue projection scenarios, key risks\n- [ ] Validation output saved to `ideas/{market-slug}/validation/idea-NNN-validation.md`\n- [ ] Presents a clear \"go/no-go\" recommendation with confidence level and reasoning\n\n**US-008**: As a user, I want validation to challenge my idea rather than just confirm it so that I avoid confirmation bias.\n\n**Acceptance Criteria**:\n- [ ] Validation actively searches for reasons the idea might fail (devil's advocate approach)\n- [ ] Identifies the top 3 risks to the idea's success\n- [ ] If significant risks are found, suggests pivots or modifications that could address them\n- [ ] Presents both bull case and bear case scenarios\n\n**Edge Cases**:\n- Idea is in a brand-new market with no competitors: Validate demand signals (search trends, forum discussions, adjacent markets) rather than competitor analysis\n- User provides an idea not generated by generate-idea: Validate it using the same rubric and research approach\n\n---\n\n### 5.3 Feature: plan-execution\n\n**Priority**: P1 (High)\n\n#### User Stories\n\n**US-009**: As a user with a validated idea, I want a concrete execution plan so that I know exactly what to build and in what order.\n\n**Acceptance Criteria**:\n- [ ] Skill is invocable via `/plan-execution` and accepts an idea document (and optionally a validation report) as input\n- [ ] Produces an execution plan with: MVP scope definition, feature prioritization, milestone breakdown, launch strategy\n- [ ] Plan includes: revenue model implementation details, customer acquisition strategy for first 10/100/1000 users, pricing recommendations\n- [ ] Output saved to `ideas/execution-plans/idea-NNN-plan.md`\n- [ ] Plan is structured to feed directly into agent-alchemy `/create-spec` for technical implementation\n\n**US-010**: As a user, I want the execution plan to be realistic for a solo developer so that I don't end up with an overwhelming roadmap.\n\n**Acceptance Criteria**:\n- [ ] Plan accounts for the user's stated available time and constraints (from generate-idea profile)\n- [ ] MVP scope is aggressively minimal \u2014 focused on proving revenue potential, not building a complete product\n- [ ] Each milestone has clear completion criteria\n- [ ] Plan includes \"validation checkpoints\" \u2014 points where the user should assess real-world feedback before continuing\n\n**Edge Cases**:\n- Idea requires skills the user doesn't have: Plan includes specific learning resources or suggests outsourcing specific components\n- Market moves fast: Plan prioritizes speed to market over feature completeness\n\n---\n\n### 5.4 Feature: market-researcher Agent\n\n**Priority**: P0 (Critical)\n\n#### User Stories\n\n**US-011**: As the generate-idea and validate-idea skills, I need a specialized research agent that can gather current market intelligence via web search.\n\n**Acceptance Criteria**:\n- [ ] Agent is defined as `agents/market-researcher.md` following agent-alchemy agent pattern\n- [ ] Has access to: `WebSearch`, `WebFetch` tools\n- [ ] Can be spawned by generate-idea and validate-idea via `Task` tool with `subagent_type: market-researcher`\n- [ ] Returns structured research findings in a consistent format\n- [ ] Research covers: competitor analysis, market size estimates, pricing data, trend analysis, community/outreach targets\n- [ ] Includes source attribution for all findings\n\n**Edge Cases**:\n- Web search returns irrelevant results: Agent should filter and rank results by relevance, flagging low-confidence findings\n- Rate limiting or search failures: Agent should gracefully degrade and report what it could/couldn't find\n\n## 6. Non-Functional Requirements\n\n### 6.1 Performance\n- Interview rounds should respond within normal Claude Code interaction time (no artificial delays)\n- Web research via market-researcher agent may take 30-60 seconds per query \u2014 user should be informed that research is in progress\n- Idea generation for 3-5 markets with 2-3 ideas each should complete within a single CC session\n\n### 6.2 Security\n- No sensitive user data is stored beyond the current session (idea documents are local markdown files)\n- Web search queries should not include personally identifiable information about the user\n- No external API keys required \u2014 uses CC's built-in web search capabilities\n\n### 6.3 Scalability\n- Not applicable \u2014 this is a single-user CC plugin, not a hosted service\n- Idea documents are local files; no database or external storage required\n\n### 6.4 Accessibility\n- Not applicable \u2014 all interaction is via Claude Code terminal interface\n- Markdown output files are inherently accessible\n\n## 7. Technical Considerations\n\n### 7.1 Architecture Overview\n\nThe plugin follows the agent-alchemy architecture pattern: skills defined via `SKILL.md` files with YAML frontmatter, agents defined via markdown files with tool whitelists, and reference files providing knowledge bases for each skill. The hub skill (`generate-idea`) can invoke the other skills as sub-steps, and all skills share the `market-researcher` agent.\n\n### 7.2 Tech Stack\n\n- **Plugin Format**: Claude Code plugin (SKILL.md + agents/ + references/)\n- **Skill Logic**: Markdown-based workflow instructions (no code)\n- **Output Format**: Structured markdown files\n- **Market Intelligence**: CC built-in WebSearch and WebFetch tools\n- **User Interaction**: AskUserQuestion tool (required for all user prompts)\n\n### 7.3 Integration Points\n\n| System | Integration Type | Purpose |\n|--------|-----------------|--------|\n| Claude Code | Plugin host | Provides the runtime environment, tool access, and slash command registration |\n| WebSearch / WebFetch | Built-in tools | Market research, competitor analysis, trend data |\n| Agent-alchemy SDD tools | Output handoff | Execution plans feed into `/create-spec` for technical implementation |\n| AskUserQuestion | Built-in tool | All user interaction during interviews |\n| Task tool | Built-in tool | Spawning market-researcher agent and invoking sub-skills |\n\n### 7.4 Technical Constraints\n\n- Plugin must follow CC plugin format (SKILL.md with valid frontmatter)\n- All user interaction must use `AskUserQuestion` tool (no text-based prompts)\n- Web search quality depends on CC's WebSearch capabilities and the LLM's ability to parse results\n- Ideas are generated by the LLM based on user profile + market research \u2014 quality is bounded by model capability\n- Plugin directory must be installable via CC plugin system\n\n### 7.5 Plugin Directory Structure\n\n```\nventure-alchemy/\n\u2514\u2500\u2500 startup-idea-generator/\n    \u2514\u2500\u2500 0.1.0/\n        \u251c\u2500\u2500 skills/\n        \u2502   \u251c\u2500\u2500 generate-idea/\n        \u2502   \u2502   \u251c\u2500\u2500 SKILL.md                    # Hub skill - interview + idea generation\n        \u2502   \u2502   \u2514\u2500\u2500 references/\n        \u2502   \u2502       \u251c\u2500\u2500 interview-questions.md   # User profiling question bank\n        \u2502   \u2502       \u251c\u2500\u2500 market-categories.md     # Market taxonomy and discovery patterns\n        \u2502   \u2502       \u251c\u2500\u2500 scoring-rubric.md        # Formal 4-dimension scoring criteria\n        \u2502   \u2502       \u251c\u2500\u2500 anti-slop-filters.md     # Contrarian + freshness filter logic\n        \u2502   \u2502       \u2514\u2500\u2500 templates/\n        \u2502   \u2502           \u251c\u2500\u2500 idea-document.md      # Template for idea output files\n        \u2502   \u2502           \u2514\u2500\u2500 market-analysis.md    # Template for MARKET.md files\n        \u2502   \u251c\u2500\u2500 validate-idea/\n        \u2502   \u2502   \u251c\u2500\u2500 SKILL.md                     # Deep validation skill\n        \u2502   \u2502   \u2514\u2500\u2500 references/\n        \u2502   \u2502       \u251c\u2500\u2500 validation-criteria.md    # SWOT, competitor analysis patterns\n        \u2502   \u2502       \u2514\u2500\u2500 templates/\n        \u2502   \u2502           \u2514\u2500\u2500 validation-report.md  # Template for validation output\n        \u2502   \u2514\u2500\u2500 plan-execution/\n        \u2502       \u251c\u2500\u2500 SKILL.md                     # Execution planning skill\n        \u2502       \u2514\u2500\u2500 references/\n        \u2502           \u251c\u2500\u2500 planning-patterns.md      # MVP scoping, milestone patterns\n        \u2502           \u2514\u2500\u2500 templates/\n        \u2502               \u2514\u2500\u2500 execution-plan.md     # Template for plan output\n        \u251c\u2500\u2500 agents/\n        \u2502   \u2514\u2500\u2500 market-researcher.md             # Web research agent definition\n        \u251c\u2500\u2500 references/                          # Shared plugin-level references\n        \u2502   \u2514\u2500\u2500 idea-quality-principles.md       # Cross-skill quality standards\n        \u2514\u2500\u2500 README.md                            # Plugin overview and usage\n```\n\n### 7.6 Output Directory Structure\n\n```\nideas/\n\u251c\u2500\u2500 {market-slug}/\n\u2502   \u251c\u2500\u2500 MARKET.md                    # Market analysis document\n\u2502   \u251c\u2500\u2500 idea-001.md                  # Individual idea document\n\u2502   \u251c\u2500\u2500 idea-002.md                  # Another idea in this market\n\u2502   \u2514\u2500\u2500 validation/\n\u2502       \u2514\u2500\u2500 idea-001-validation.md   # Validation report for idea-001\n\u251c\u2500\u2500 {another-market-slug}/\n\u2502   \u251c\u2500\u2500 MARKET.md\n\u2502   \u2514\u2500\u2500 idea-001.md\n\u2514\u2500\u2500 execution-plans/\n    \u2514\u2500\u2500 idea-001-plan.md             # Execution plan for selected idea\n```\n\n## 8. Scope Definition\n\n### 8.1 In Scope\n\n- Interview-based user profiling skill (`/generate-idea`)\n- Market discovery via web research\n- Idea generation with formal scoring rubric (Revenue Potential, Solo Buildability, Market Validation, Personal Fit)\n- Three-layer anti-slop filtering (deep profiling + market evidence + contrarian/freshness filter)\n- Network/outreach suggestions for chosen markets\n- Idea validation skill (`/validate-idea`) with devil's advocate approach\n- Execution planning skill (`/plan-execution`) with solo-developer-appropriate scope\n- Market-researcher agent for web-based intelligence\n- Structured markdown output documents\n- Plugin structure mirroring agent-alchemy pattern\n\n### 8.2 Out of Scope\n\n- **Code implementation**: The plugin does not write code \u2014 use agent-alchemy SDD tools for that\n- **Real-time market data feeds**: Uses web search as best-effort intelligence, not live APIs\n- **Multi-user features**: Personal-use plugin only, no collaboration or sharing\n- **Financial projections**: Revenue model suggestions are qualitative, not quantitative financial models\n- **Legal/compliance advice**: Plugin may mention regulatory considerations but does not provide legal guidance\n- **Hosting/deployment**: This is a local CC plugin, not a hosted service\n\n### 8.3 Future Considerations\n\n- **Idea tracking/portfolio**: Track which ideas were generated, validated, and acted upon over time\n- **Feedback loop**: After building and launching an idea, capture real-world results to improve future idea generation\n- **Market monitoring**: Periodic re-check of market conditions for ideas in progress\n- **Community sharing**: Option to share anonymized idea templates or market analyses with other users\n- **Integration with other venture-alchemy plugins**: As more plugins are built, create a unified entrepreneurial workflow\n\n## 9. Implementation Plan\n\n### 9.1 Phase 1: Foundation \u2014 Plugin Structure + generate-idea Core\n\n**Completion Criteria**: User can invoke `/generate-idea`, complete the interview, and receive a ranked list of ideas with market context as markdown files.\n\n| Deliverable | Description | Dependencies |\n|-------------|-------------|--------------|\n| Plugin directory structure | Create the full plugin directory matching agent-alchemy pattern | None |\n| generate-idea SKILL.md | Core skill definition with interview workflow, user profiling, and idea generation logic | Plugin structure |\n| Interview question bank | `references/interview-questions.md` \u2014 questions for user profiling (skills, interests, constraints, network, goals) | None |\n| Market categories reference | `references/market-categories.md` \u2014 taxonomy of markets and discovery patterns | None |\n| Scoring rubric reference | `references/scoring-rubric.md` \u2014 formal 4-dimension scoring criteria and weight system | None |\n| Idea document template | `references/templates/idea-document.md` \u2014 structure for idea output files | None |\n| Market analysis template | `references/templates/market-analysis.md` \u2014 structure for MARKET.md files | None |\n| market-researcher agent | `agents/market-researcher.md` \u2014 web research agent for market intelligence | None |\n| README.md | Plugin overview, usage instructions, skill descriptions | All above |\n\n**Checkpoint Gate**: Test generate-idea end-to-end \u2014 verify that the interview produces personalized, non-generic ideas with market evidence. Review idea documents for quality and completeness.\n\n---\n\n### 9.2 Phase 2: Core Features \u2014 validate-idea + Scoring + Anti-Slop\n\n**Completion Criteria**: User can validate a generated idea with deep market analysis, and ideas are filtered through the full anti-slop pipeline.\n\n| Deliverable | Description | Dependencies |\n|-------------|-------------|--------------|\n| validate-idea SKILL.md | Validation skill with SWOT analysis, competitor deep-dive, and go/no-go recommendation | Phase 1 (idea document format) |\n| Validation criteria reference | `references/validation-criteria.md` \u2014 patterns for SWOT, competitor analysis, risk assessment | None |\n| Validation report template | `references/templates/validation-report.md` \u2014 structure for validation output | None |\n| Anti-slop filters reference | `references/anti-slop-filters.md` \u2014 contrarian filter logic and freshness check patterns | None |\n| Freshness filter integration | Web search-based saturation check integrated into generate-idea workflow | market-researcher agent |\n| Network/outreach suggestions | Community and outreach target identification integrated into generate-idea | market-researcher agent |\n\n**Checkpoint Gate**: Validate that the anti-slop filters meaningfully differentiate idea quality. Test validate-idea produces actionable go/no-go recommendations with evidence.\n\n---\n\n### 9.3 Phase 3: Enhancement \u2014 plan-execution + Pipeline Integration\n\n**Completion Criteria**: User can go from `/generate-idea` through validation to a concrete execution plan ready to hand off to agent-alchemy `/create-spec`.\n\n| Deliverable | Description | Dependencies |\n|-------------|-------------|--------------|\n| plan-execution SKILL.md | Execution planning skill with MVP scope, milestones, launch strategy, and validation checkpoints | Phase 1 (idea format), Phase 2 (validation format) |\n| Planning patterns reference | `references/planning-patterns.md` \u2014 MVP scoping patterns, milestone templates, solo-dev constraints | None |\n| Execution plan template | `references/templates/execution-plan.md` \u2014 structure for execution plan output | None |\n| Hub model integration | generate-idea can optionally invoke validate-idea and plan-execution as sub-steps | All skills |\n| Idea quality principles | `references/idea-quality-principles.md` \u2014 cross-skill quality standards and anti-slop philosophy | All phases |\n| Agent-alchemy handoff | Execution plan output is formatted to feed directly into `/create-spec` | plan-execution skill |\n\n**Checkpoint Gate**: Test full pipeline end-to-end: generate \u2192 validate \u2192 plan \u2192 verify plan is usable as input for `/create-spec`.\n\n## 10. Dependencies\n\n### 10.1 Technical Dependencies\n\n| Dependency | Owner | Status | Risk if Delayed |\n|------------|-------|--------|------------------|\n| Claude Code plugin system | Anthropic | Available | Blocking \u2014 plugin format must be supported |\n| WebSearch / WebFetch tools | Anthropic (CC) | Available | Degrades market research quality if unavailable |\n| Agent-alchemy SDD tools | sequenzia | Available (installed) | Non-blocking \u2014 only needed for downstream handoff |\n| AskUserQuestion tool | Anthropic (CC) | Available | Blocking \u2014 required for all user interaction |\n\n### 10.2 Cross-Team Dependencies\n\n| Team | Dependency | Status |\n|------|------------|--------|\n| None | This is a personal project with no external team dependencies | N/A |\n\n## 11. Risks & Mitigations\n\n| Risk | Impact | Likelihood | Mitigation Strategy | Owner |\n|------|--------|------------|---------------------|-------|\n| Generated ideas are generic \"AI slop\" | High | Medium | Three-layer anti-slop: deep profiling + market evidence + contrarian/freshness filter | generate-idea skill |\n| Web search returns low-quality market data | Medium | Medium | Agent flags low-confidence findings; skill presents uncertainty transparently | market-researcher agent |\n| Plugin structure is incorrect or doesn't register | High | Low | Mirror agent-alchemy exactly; test installation early | Phase 1 |\n| Interview is too long or tedious | Medium | Medium | Adaptive interview depth; allow early exit; keep to 3-4 rounds max | generate-idea skill |\n| Ideas look good on paper but fail in practice | High | Medium | Validation skill with devil's advocate approach; network outreach for real-world feedback | validate-idea skill |\n| Scope creep during development | Medium | High | Strict phase boundaries; MVP focuses on generate-idea only; iterate from there | All phases |\n\n## 12. Open Questions\n\n| # | Question | Owner | Due Date | Resolution |\n|---|----------|-------|----------|------------|\n| 1 | How should the plugin be installed/distributed? (Local install, git clone, or CC plugin registry?) | aprancl | Phase 1 | TBD |\n| 2 | Should idea documents include visual elements (charts, diagrams) or stay text-only for CC compatibility? | aprancl | Phase 1 | TBD |\n| 3 | How frequently should the freshness filter re-check market saturation for previously generated ideas? | aprancl | Phase 2 | TBD |\n| 4 | Should there be a \"portfolio\" view that tracks all generated ideas across sessions? | aprancl | Post-MVP | TBD |\n\n## 13. Appendix\n\n### 13.1 Glossary\n\n| Term | Definition |\n|------|------------|\n| CC | Claude Code \u2014 Anthropic's CLI for Claude, the runtime environment for this plugin |\n| Skill | A Claude Code plugin component defined by a SKILL.md file that becomes a slash command |\n| Agent | A specialized Claude instance spawned via the Task tool with specific tools and capabilities |\n| Anti-slop | Techniques to prevent generic, oversaturated, or impractical ideas from being presented |\n| Freshness filter | Web search-based check for market saturation before presenting an idea |\n| Contrarian filter | Logic that rejects \"obvious\" ideas and favors non-obvious opportunities |\n| Scoring rubric | Formal 4-dimension (Revenue, Buildability, Validation, Fit) scoring system with weighted composite |\n| Hub model | Architecture where generate-idea serves as the main entry point and can invoke other skills as sub-steps |\n| Agent-alchemy | An existing CC plugin ecosystem for spec-driven development (create-spec, create-tasks, execute-tasks) |\n| Market-first approach | Identifying suitable markets before generating ideas, rather than brainstorming ideas in a vacuum |\n\n### 13.2 References\n\n- [Agent Alchemy SDD Tools](https://github.com/sequenzia/agent-alchemy/tree/main/claude/sdd-tools/skills) \u2014 Source of inspiration and architectural pattern\n- Claude Code Plugin Documentation \u2014 Plugin format, SKILL.md specification, agent definition\n- Agent-alchemy plugin cache at `~/.claude/plugins/cache/agent-alchemy/` \u2014 Reference implementation\n\n### 13.3 Agent Recommendations (Accepted)\n\n*The following recommendations were suggested based on industry best practices and accepted during the interview:*\n\n1. **Output Structure**: Organized directory layout (`ideas/{market-slug}/`) grouping markets with their ideas and validation documents\n   - Rationale: Mirrors agent-alchemy's file-based chaining pattern and keeps market context grouped with its ideas\n   - Applies to: All skills (output format)\n\n2. **Scoring Rubric**: Formal 1-5 scoring across 4 dimensions (Revenue Potential, Solo Buildability, Market Validation, Personal Fit) with weighted composite\n   - Rationale: Makes idea ranking transparent, repeatable, and user-adjustable rather than subjective\n   - Applies to: generate-idea skill (idea ranking)\n\n3. **Market Researcher Agent**: Dedicated web research agent shared by generate-idea and validate-idea\n   - Rationale: Centralizes research logic, ensures consistent evidence-gathering, and elevates ideas beyond pure LLM knowledge\n   - Applies to: generate-idea, validate-idea (market intelligence)\n\n4. **Idea Freshness Filter**: Active market saturation verification via web search before presenting ideas\n   - Rationale: The contrarian filter in action \u2014 instead of just avoiding obvious ideas by prompt engineering, actively verifies market saturation with real data\n   - Applies to: generate-idea skill (anti-slop pipeline)\n\n---\n\n*Document generated by SDD Tools \u2014 Create Spec Skill*"};
+const FINDINGS_DATA = [{"id":"FIND-001","title":"Anti-Slop Filters Deferred to Phase 2 Despite P0 Priority","category":"Inconsistencies","severity":"critical","location":"Section 9.2 \"Phase 2\" (lines 427-428) vs Section 5.1 US-005 (lines 157-164)","lineNumber":427,"currentText":"| Anti-slop filters reference | `references/anti-slop-filters.md` \u2014 contrarian filter logic and freshness check patterns | None |","issue":"US-005 (anti-slop filtering) is part of the generate-idea feature marked P0 (Critical), which maps to Phase 1. However, the anti-slop filters reference and freshness filter integration deliverables are listed in Phase 2. Phase 1 cannot satisfy the P0 feature's acceptance criteria for US-005.","impact":"Implementers following the phase plan will ship Phase 1 without anti-slop filtering, which is supposed to be a core differentiator. The Phase 1 checkpoint gate cannot be properly tested without these filters.","proposedText":null,"status":"pending"},{"id":"FIND-002","title":"User Stories Lack Failure/Error Acceptance Criteria","category":"Missing Information","severity":"critical","location":"Section 5 \"Functional Requirements\" (lines 112-257)","lineNumber":112,"currentText":null,"issue":"Acceptance criteria across all user stories (US-001 through US-011) only cover the happy path. Edge cases are listed at the feature level but are not expressed as testable acceptance criteria. For example: US-001 does not specify behavior if the user abandons the interview; US-002 does not specify what happens if web search fails; US-007 does not address insufficient validation research data.","impact":"Without failure-path acceptance criteria, implementers must guess at error handling behavior and testers cannot verify edge case handling. This is especially important for features depending on external web search.","proposedText":"Add at least one failure-path acceptance criterion to each user story that depends on external input. For example, add to US-002: \"If web search returns insufficient data for a market, the skill flags it as 'low-confidence' and presents available evidence with caveats.\"","status":"pending"},{"id":"FIND-003","title":"Network/Outreach Feature Deferred to Phase 2 Despite P0 Parent","category":"Inconsistencies","severity":"warning","location":"Section 9.2 \"Phase 2\" (line 429) vs Section 5.1 US-006 (lines 166-172)","lineNumber":429,"currentText":"| Network/outreach suggestions | Community and outreach target identification integrated into generate-idea | market-researcher agent |","issue":"US-006 (network/outreach suggestions) is part of the generate-idea feature (P0, Phase 1), but the Network/outreach suggestions deliverable is listed in Phase 2. Phase 1 cannot fully satisfy US-006's acceptance criteria.","impact":"The Phase 1 generate-idea skill will be incomplete relative to its own user stories, potentially confusing implementers about what to include.","proposedText":null,"status":"pending"},{"id":"FIND-004","title":"\"Revenue Projection Scenarios\" Contradicts Qualitative-Only Scope","category":"Inconsistencies","severity":"warning","location":"Section 5.2 US-007 (line 192) vs Section 8.2 \"Out of Scope\" (line 384)","lineNumber":192,"currentText":"- [ ] Produces a validation report with: SWOT analysis, competitor comparison table, revenue projection scenarios, key risks","issue":"US-007 acceptance criteria state the validation report includes \"revenue projection scenarios,\" but Section 8.2 explicitly excludes \"quantitative financial models\" and states \"revenue model suggestions are qualitative, not quantitative.\" The term \"revenue projection scenarios\" implies quantitative analysis.","impact":"Creates ambiguity about whether validation should include numerical revenue projections or qualitative revenue model assessments.","proposedText":"- [ ] Produces a validation report with: SWOT analysis, competitor comparison table, qualitative revenue model scenarios, key risks","status":"pending"},{"id":"FIND-005","title":"Anti-Slop Metric Lacks Defined Comparison Baseline","category":"Missing Information","severity":"warning","location":"Section 3.2 \"Success Metrics\" (line 62)","lineNumber":62,"currentText":"| Anti-slop effectiveness | N/A | <20% of ideas overlap with common \"generic AI suggestions\" | Compare output against known generic idea lists | MVP |","issue":"The anti-slop effectiveness metric targets \"<20% overlap with common generic AI suggestions\" and the measurement method is \"Compare output against known generic idea lists.\" However, no such list is defined in the spec, and the anti-slop-filters.md reference file does not yet exist.","impact":"The metric is not measurable without a defined comparison baseline. Testers cannot evaluate anti-slop effectiveness without knowing what constitutes the \"known generic idea list.\"","proposedText":"| Anti-slop effectiveness | N/A | <20% of ideas overlap with common \"generic AI suggestions\" | Compare output against curated generic idea list maintained in anti-slop-filters.md (e.g., todo apps, expense trackers, AI wrappers, weather apps, etc.) | MVP |","status":"pending"},{"id":"FIND-006","title":"Interview Length Constraint Only in Risk Mitigation, Not in Requirements","category":"Missing Information","severity":"warning","location":"Section 11 \"Risks\" (line 474) vs Section 5.1 US-001 (lines 120-127)","lineNumber":474,"currentText":"| Interview is too long or tedious | Medium | Medium | Adaptive interview depth; allow early exit; keep to 3-4 rounds max | generate-idea skill |","issue":"The risk mitigation for \"Interview is too long or tedious\" states \"keep to 3-4 rounds max,\" but US-001's acceptance criteria do not include any interview length or round count constraint. The constraint exists only as a risk mitigation suggestion, not as an enforceable requirement.","impact":"Without the constraint in the acceptance criteria, implementers may create interviews of arbitrary length, and the risk mitigation becomes aspirational rather than testable.","proposedText":null,"status":"pending"},{"id":"FIND-007","title":"Undefined Default Scoring Weights","category":"Missing Information","severity":"warning","location":"Section 5.1 US-004 (line 153)","lineNumber":153,"currentText":"- [ ] Composite score is a weighted average; user can adjust weights before scoring","issue":"US-004 states the user can adjust weights for the 4-dimension composite score, but does not specify what the default weights are. Implementers need to know the starting weight configuration.","impact":"Without default weights, different implementations may use different defaults, leading to inconsistent scoring behavior.","proposedText":"- [ ] Composite score is a weighted average with equal default weights (25% each); user can adjust weights before scoring","status":"pending"},{"id":"FIND-008","title":"Vague \"Single CC Session\" Performance Requirement","category":"Ambiguities","severity":"warning","location":"Section 6.1 \"Performance\" (line 264)","lineNumber":264,"currentText":"- Idea generation for 3-5 markets with 2-3 ideas each should complete within a single CC session","issue":"\"Single CC session\" is not a measurable constraint. A CC session has no defined time limit or token budget, so this could mean 10 minutes or 2 hours depending on interpretation.","impact":"The performance requirement is not testable as written, making it difficult to verify compliance.","proposedText":"- Idea generation for 3-5 markets with 2-3 ideas each should complete within approximately 15-20 minutes of active interaction, staying within a single CC context window","status":"pending"},{"id":"FIND-009","title":"Execution Plan Output Path Loses Market Context","category":"Inconsistencies","severity":"warning","location":"Section 5.3 US-009 (line 222) and Section 7.6 (line 361)","lineNumber":222,"currentText":"- [ ] Output saved to `ideas/execution-plans/idea-NNN-plan.md`","issue":"Execution plans are saved to a flat ideas/execution-plans/ directory without the market slug. All other output paths use ideas/{market-slug}/... for market grouping. This breaks the market-grouped directory convention and makes it harder to trace which market an execution plan belongs to.","impact":"Execution plans lose their market association, reducing traceability in the output file structure.","proposedText":"- [ ] Output saved to `ideas/{market-slug}/execution-plans/idea-NNN-plan.md`","status":"pending"},{"id":"FIND-010","title":"Secondary Personas Missing Context Field","category":"Missing Information","severity":"suggestion","location":"Section 4.1 \"Target Users\" (lines 83-91)","lineNumber":83,"currentText":null,"issue":"The primary persona includes a Context field describing the user's development environment, but the two secondary personas (Aspiring Technical Entrepreneur, Freelance Developer) lack this field. Since the plugin requires Claude Code, confirming these personas also use CC would strengthen the persona definitions.","impact":"Minor completeness gap in persona definitions that could leave implementers uncertain about secondary user environments.","proposedText":null,"status":"pending"},{"id":"FIND-011","title":"Open-Ended Platform List in Outreach Suggestions","category":"Ambiguities","severity":"suggestion","location":"Section 5.1 US-006 (line 170)","lineNumber":170,"currentText":"- [ ] If user knows nobody in a market, the skill suggests outreach targets: relevant communities, subreddits, forums, Discord servers, industry events","issue":"The acceptance criterion lists outreach platform types as an illustrative list without defined boundaries. An implementer might wonder whether LinkedIn groups, Slack communities, newsletters, or podcasts should also be included.","impact":"Minor scope ambiguity that could lead to inconsistent implementations.","proposedText":"- [ ] If user knows nobody in a market, the skill suggests outreach targets from relevant platforms (the market-researcher agent determines appropriate platforms dynamically, which may include subreddits, forums, Discord servers, Slack communities, industry events, and newsletters)","status":"pending"},{"id":"FIND-012","title":"Plugin Versioning Convention Unspecified","category":"Ambiguities","severity":"suggestion","location":"Section 7.5 \"Plugin Directory Structure\" (line 316)","lineNumber":316,"currentText":null,"issue":"The directory structure includes version 0.1.0 but the spec does not describe the versioning convention (semver?), what triggers version bumps, or how multiple versions coexist. This is partially related to Open Question #1 but the versioning scheme itself is a separate concern.","impact":"Without a defined versioning convention, future updates may use inconsistent version numbering.","proposedText":null,"status":"pending"}];
+
+// === STATE ===
+const STATE = {
+  findings: [],
+  selectedId: null,
+  statusFilter: 'all',
+  severityFilter: 'all',
+  comments: {}
+};
+
+function init() {
+  STATE.findings = FINDINGS_DATA.map(f => ({
+    ...f,
+    status: f.status || 'pending'
+  }));
+  renderHeader();
+  renderStats();
+  renderFilters();
+  renderSpec();
+  renderFindings();
+  updatePromptPanel();
+}
+
+// === RENDERING ===
+
+function renderHeader() {
+  document.getElementById('spec-name').textContent = SPEC_CONTENT.name || 'Spec Analysis';
+  document.getElementById('depth-level').textContent = SPEC_CONTENT.depthLevel || '';
+  document.getElementById('analyzed-at').textContent = SPEC_CONTENT.analyzedAt || '';
+  document.title = `Review: ${SPEC_CONTENT.name || 'Spec Analysis'}`;
+}
+
+function renderStats() {
+  const counts = { total: STATE.findings.length, critical: 0, warning: 0, suggestion: 0, pending: 0, approved: 0, rejected: 0 };
+  STATE.findings.forEach(f => {
+    counts[f.severity]++;
+    counts[f.status]++;
+  });
+
+  const el = document.getElementById('stats');
+  el.innerHTML = [
+    statHTML('Total', counts.total, ''),
+    statHTML('Critical', counts.critical, 'var(--purple)'),
+    statHTML('Warning', counts.warning, 'var(--amber)'),
+    statHTML('Suggestion', counts.suggestion, 'var(--blue)'),
+    statHTML('Pending', counts.pending, 'var(--amber)'),
+    statHTML('Approved', counts.approved, 'var(--green)'),
+    statHTML('Rejected', counts.rejected, 'var(--red)')
+  ].join('');
+}
+
+function statHTML(label, value, color) {
+  const pct = STATE.findings.length ? (value / STATE.findings.length * 100) : 0;
+  return `<div class="stat">
+    <div class="stat-value" style="color:${color || 'var(--text)'}">${value}</div>
+    <div class="stat-label">${label}</div>
+    <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct}%;background:${color || 'var(--border)'}"></div></div>
+  </div>`;
+}
+
+function renderFilters() {
+  const counts = { all: STATE.findings.length, pending: 0, approved: 0, rejected: 0 };
+  STATE.findings.forEach(f => counts[f.status]++);
+
+  const tabs = [
+    { key: 'all', label: 'All' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'approved', label: 'Approved' },
+    { key: 'rejected', label: 'Rejected' }
+  ];
+
+  document.getElementById('status-filters').innerHTML = tabs.map(t =>
+    `<button class="filter-tab${STATE.statusFilter === t.key ? ' active' : ''}"
+      onclick="setStatusFilter('${t.key}')">${t.label}<span class="count">${counts[t.key]}</span></button>`
+  ).join('');
+}
+
+function renderSpec() {
+  const content = SPEC_CONTENT.content || '';
+  const el = document.getElementById('spec-content');
+  const lines = content.split('\n');
+  const findingsByLine = {};
+  STATE.findings.forEach(f => {
+    if (f.lineNumber) {
+      if (!findingsByLine[f.lineNumber]) findingsByLine[f.lineNumber] = [];
+      findingsByLine[f.lineNumber].push(f);
+    }
+  });
+
+  let html = '';
+  lines.forEach((line, i) => {
+    const lineNum = i + 1;
+    const findings = findingsByLine[lineNum];
+    if (findings) {
+      const f = findings[0];
+      const statusClass = f.status !== 'pending' ? ` status-${f.status}` : '';
+      const selectedClass = f.id === STATE.selectedId ? ' selected' : '';
+      const markers = findings.map(ff =>
+        `<span class="annotation-marker severity-${ff.severity}" onclick="selectFinding('${ff.id}')" title="${escapeAttr(ff.title)}">${ff.id}</span>`
+      ).join('');
+      html += `<div class="annotated-line severity-${f.severity}${statusClass}${selectedClass}" data-finding-id="${f.id}" onclick="selectFinding('${f.id}')">${renderMarkdownLine(line)}${markers}</div>`;
+    } else {
+      html += `<div>${renderMarkdownLine(line)}</div>`;
+    }
+  });
+
+  el.innerHTML = html;
+}
+
+function renderFindings() {
+  const filtered = STATE.findings.filter(f => {
+    if (STATE.statusFilter !== 'all' && f.status !== STATE.statusFilter) return false;
+    if (STATE.severityFilter !== 'all' && f.severity !== STATE.severityFilter) return false;
+    return true;
+  });
+
+  const el = document.getElementById('findings-list');
+
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty-state"><h3>No findings match filters</h3><p>Try changing the status or severity filter.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(f => {
+    const isSelected = f.id === STATE.selectedId;
+    const comment = STATE.comments[f.id] || '';
+    return `
+    <div class="finding-card${isSelected ? ' selected' : ''} status-${f.status}" onclick="selectFinding('${f.id}')">
+      <div class="finding-header">
+        <div>
+          <span class="finding-id">${esc(f.id)}</span>
+          <span class="badge badge-${f.severity}">${esc(f.severity)}</span>
+          <span class="status-badge status-${f.status}">${esc(f.status)}</span>
+        </div>
+      </div>
+      <div class="finding-title">${esc(f.title)}</div>
+      <div class="category-badge">${esc(f.category)}</div>
+      <div class="finding-location">${esc(f.location)}</div>
+      <div class="finding-issue">${esc(f.issue)}</div>
+      ${f.impact ? `<div class="finding-issue" style="font-style:italic">${esc(f.impact)}</div>` : ''}
+      ${isSelected ? `
+        ${f.currentText ? `
+          <div class="finding-detail" onclick="event.stopPropagation()">
+            <div class="finding-detail-label">Current</div>
+            <div class="finding-detail-text current">${esc(f.currentText)}</div>
+          </div>` : ''}
+        ${f.proposedText ? `
+          <div class="finding-detail" onclick="event.stopPropagation()">
+            <div class="finding-detail-label">Proposed</div>
+            <div class="finding-detail-text proposed">${esc(f.proposedText)}</div>
+          </div>` : ''}
+        <textarea class="comment-area" placeholder="Add a comment (optional)..." oninput="setComment('${f.id}', this.value)" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">${esc(comment)}</textarea>
+        <div class="finding-actions">
+          ${f.status === 'pending' ? `
+            <button class="btn btn-approve" onclick="event.stopPropagation(); setStatus('${f.id}', 'approved')">Approve</button>
+            <button class="btn btn-reject" onclick="event.stopPropagation(); setStatus('${f.id}', 'rejected')">Reject</button>
+          ` : `
+            <button class="btn" onclick="event.stopPropagation(); setStatus('${f.id}', 'pending')">Reset to Pending</button>
+          `}
+        </div>
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+// === MINIMAL MARKDOWN RENDERER ===
+
+function renderMarkdownLine(line) {
+  if (/^#### (.+)/.test(line)) return `<h4>${esc(RegExp.$1)}</h4>`;
+  if (/^### (.+)/.test(line)) return `<h3>${esc(RegExp.$1)}</h3>`;
+  if (/^## (.+)/.test(line)) return `<h2>${esc(RegExp.$1)}</h2>`;
+  if (/^# (.+)/.test(line)) return `<h1>${esc(RegExp.$1)}</h1>`;
+  if (/^[-*] (.+)/.test(line)) return `<li>${inlineMarkdown(RegExp.$1)}</li>`;
+  if (/^\d+\. (.+)/.test(line)) return `<li>${inlineMarkdown(RegExp.$1)}</li>`;
+  if (line.trim() === '') return '<br>';
+  return inlineMarkdown(line);
+}
+
+function inlineMarkdown(text) {
+  let s = esc(text);
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/`(.+?)`/g, '<code>$1</code>');
+  return s;
+}
+
+// === STATE MUTATIONS ===
+
+function selectFinding(id) {
+  STATE.selectedId = STATE.selectedId === id ? null : id;
+  updateAll();
+}
+
+function setStatusFilter(filter) {
+  STATE.statusFilter = filter;
+  STATE.selectedId = null;
+  updateAll();
+}
+
+function setStatus(id, status) {
+  const f = STATE.findings.find(x => x.id === id);
+  if (f) f.status = status;
+  updateAll();
+  showToast(`${id} ${status}`);
+}
+
+function setComment(id, text) {
+  STATE.comments[id] = text;
+}
+
+function updateAll() {
+  renderStats();
+  renderFilters();
+  renderSpec();
+  renderFindings();
+  updatePromptPanel();
+}
+
+// === PROMPT GENERATION ===
+
+function updatePromptPanel() {
+  const approved = STATE.findings.filter(f => f.status === 'approved');
+  const panel = document.getElementById('prompt-panel');
+  const countEl = document.getElementById('approved-count');
+
+  countEl.textContent = approved.length;
+
+  if (approved.length === 0) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+
+  const prompt = generatePrompt(approved);
+  document.getElementById('prompt-content').textContent = prompt;
+}
+
+function generatePrompt(approved) {
+  const lines = [`Apply these changes to the spec at: ${SPEC_CONTENT.path}\n`];
+
+  approved.forEach((f, i) => {
+    lines.push(`${i + 1}. ${f.title}`);
+    lines.push(`   Location: ${f.location}`);
+    if (f.currentText && f.proposedText) {
+      lines.push(`   Change: "${f.currentText}" \u2192 "${f.proposedText}"`);
+    } else if (f.proposedText) {
+      lines.push(`   Add: "${f.proposedText}"`);
+    } else {
+      lines.push(`   Issue: ${f.issue}`);
+    }
+    const comment = STATE.comments[f.id];
+    if (comment) {
+      lines.push(`   Note: ${comment}`);
+    }
+    lines.push('');
+  });
+
+  return lines.join('\n');
+}
+
+function copyPrompt() {
+  const approved = STATE.findings.filter(f => f.status === 'approved');
+  const prompt = generatePrompt(approved);
+  navigator.clipboard.writeText(prompt).then(() => {
+    showToast('Prompt copied to clipboard');
+  }).catch(() => {
+    const el = document.getElementById('prompt-content');
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    showToast('Select All applied \u2014 press Cmd/Ctrl+C');
+  });
+}
+
+function downloadSpec() {
+  const content = SPEC_CONTENT.content || '';
+  let modified = content;
+
+  const approved = STATE.findings.filter(f => f.status === 'approved' && f.currentText && f.proposedText);
+  approved.forEach(f => {
+    modified = modified.replace(f.currentText, f.proposedText);
+  });
+
+  const blob = new Blob([modified], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const baseName = (SPEC_CONTENT.path || 'spec').split('/').pop().replace(/\.md$/, '');
+  a.download = `${baseName}.modified.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Modified spec downloaded');
+}
+
+// === HELPERS ===
+
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+function escapeAttr(str) {
+  return esc(str).replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// === SEVERITY FILTER ===
+document.getElementById('severity-filter').addEventListener('change', function() {
+  STATE.severityFilter = this.value;
+  STATE.selectedId = null;
+  updateAll();
+});
+
+// === INIT ===
+init();
+</script>
+</body>
+</html>
