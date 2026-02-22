@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `.gitignore`, `LICENSE`, `CHANGELOG.md`, and `CODEOWNERS` management files
 - `internal/` directory for specs and internal documents
-- `claude/` plugin marketplace directory with `marketplace.json` registry
+- `.claude-plugin/marketplace.json` plugin marketplace registry
+- `claude/` plugin directory
 
 ### Changed
 

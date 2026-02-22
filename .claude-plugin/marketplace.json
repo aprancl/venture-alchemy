@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "venture-alchemy",
+  "description": "Claude Code plugins for discovering, validating, and planning startup and side-project ideas",
+  "owner": {
+    "name": "Anthony Prancl",
+    "email": "aprancl@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "venture-lab",
+      "description": "Interview-driven startup idea generation, validation, and execution planning pipeline",
+      "version": "0.1.0",
+      "source": "./claude/venture-lab",
+      "category": "productivity"
+    }
+  ]
+}

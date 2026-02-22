@@ -8,9 +8,9 @@ Claude Code plugin marketplace for entrepreneurial pursuits. Contains plugins th
 
 ```
 venture-alchemy/
-├── claude/                         # Plugin marketplace directory
-│   ├── .claude/
-│   │   └── marketplace.json        # Plugin registry manifest
+├── .claude-plugin/
+│   └── marketplace.json            # Plugin marketplace registry
+├── claude/                         # Plugin directory
 │   └── venture-lab/                # Plugin: idea generation pipeline
 │       ├── plugin.yaml             # Plugin manifest (name, version, skills)
 │       ├── README.md
@@ -31,7 +31,7 @@ venture-alchemy/
 
 ### Directory Layout
 
-Plugins live in `claude/{plugin-name}/` containing `plugin.yaml`, `skills/`, `agents/`, `references/`, and `README.md`. The `claude/.claude/marketplace.json` registry lists all available plugins.
+Plugins live in `claude/{plugin-name}/` containing `plugin.yaml`, `skills/`, `agents/`, `references/`, and `README.md`. The `.claude-plugin/marketplace.json` registry lists all available plugins.
 
 ### SKILL.md Format
 
