@@ -1,0 +1,22 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env*
+!.env.example
+
+# Private keys
+*.pem
+
+# Local Claude settings
+.claude/
+
+# Generated output
+ideas/

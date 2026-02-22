@@ -1,4 +1,4 @@
-# Startup Idea Generator
+# Venture Lab
 
 A Claude Code plugin that helps users generate startup and side-project ideas through interview-driven discovery, market-first validation, and execution planning. Uses deep user profiling, web research, and anti-slop filtering to produce evidence-backed ideas rather than generic suggestions.
 
@@ -36,7 +36,7 @@ A Claude Code plugin that helps users generate startup and side-project ideas th
 ## Directory Structure
 
 ```
-startup-idea-generator/
+venture-lab/
 ├── plugin.yaml                            # Plugin manifest (name, version, skills)
 ├── skills/
 │   ├── generate-idea/
@@ -68,7 +68,7 @@ startup-idea-generator/
 Invoke the idea generation skill to start an interactive interview and receive personalized startup ideas:
 
 ```
-/startup-idea-generator:generate-idea
+/venture-lab:generate-idea
 ```
 
 The skill walks you through:
@@ -83,7 +83,7 @@ The skill walks you through:
 Run structured validation on a generated idea:
 
 ```
-/startup-idea-generator:validate-idea
+/venture-lab:validate-idea
 ```
 
 Performs deep market analysis, competitive landscape review, and feasibility assessment. Produces a go/no-go recommendation backed by evidence.
@@ -93,7 +93,7 @@ Performs deep market analysis, competitive landscape review, and feasibility ass
 Transform a validated idea into an actionable plan:
 
 ```
-/startup-idea-generator:plan-execution
+/venture-lab:plan-execution
 ```
 
 Generates an implementation plan with MVP scoping, milestones, and resource estimates tailored for solo developers.
