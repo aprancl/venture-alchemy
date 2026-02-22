@@ -25,14 +25,12 @@ Each command produces structured markdown files in an `ideas/` directory organiz
 
 ### Install the plugin
 
-Clone this repo and install it as a Claude Code plugin:
+Add the marketplace and install:
 
-```bash
-git clone https://github.com/yourusername/venture-alchemy.git
-claude mcp add-plugin venture-alchemy ./venture-alchemy/venture-lab
 ```
-
-Or add it manually to your Claude Code settings by pointing to the `venture-lab` directory.
+/plugin marketplace add aprancl/venture-alchemy
+/plugin install venture-lab@venture-alchemy
+```
 
 ### Run your first idea generation
 
