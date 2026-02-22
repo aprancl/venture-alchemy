@@ -15,8 +15,8 @@ allowed-tools:
 argument-hint: "[idea-path]"
 arguments:
   - name: idea-path
-    description: Path to the idea document to validate
-    required: true
+    description: Path to the idea document to validate (optional — if omitted, the user will be interviewed)
+    required: false
 model: opus
 ---
 
@@ -54,13 +54,9 @@ If you need the user to make a choice or provide input, use AskUserQuestion.
 
 Validating the idea IS the planning activity.
 
-### Idea Path is Required
+### Idea Input is Flexible
 
-This skill requires an `idea-path` argument pointing to the idea document to validate. If the argument is missing or the file does not exist:
-
-1. Use `AskUserQuestion` to prompt the user for the correct path
-2. Provide helpful options if possible (e.g., search for idea files via `Glob`)
-3. Do not proceed until a valid, readable idea document is provided
+This skill accepts an idea via file path OR conversational interview. If no `idea-path` argument is provided, the skill asks the user how they want to supply their idea. If a path is provided but the file does not exist, prompt for correction or offer the interview alternative.
 
 ---
 
@@ -68,7 +64,7 @@ This skill requires an `idea-path` argument pointing to the idea document to val
 
 This workflow has ten phases:
 
-1. **Load & Parse Idea** -- Read the idea document and extract key details
+1. **Gather Idea** -- Obtain the idea from a file or through a conversational interview
 2. **Load References** -- Read validation criteria and report template
 3. **Deep Research** -- Spawn market-researcher agent for competitor/market analysis
 4. **SWOT Analysis** -- Structured analysis using validation criteria frameworks
@@ -81,9 +77,153 @@ This workflow has ten phases:
 
 ---
 
-## Phase 1: Load & Parse Idea
+## Phase 1: Gather Idea
 
-### Read the Idea Document
+This phase has two paths depending on whether an `idea-path` argument was provided.
+
+### Path A: No Argument Provided
+
+If no `idea-path` was given, ask the user how they want to supply their idea:
+
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "Your Idea"
+      question: "How would you like to share the idea you want validated?"
+      options:
+        - label: "Describe it here"
+          description: "I'll explain my idea and you'll ask me follow-up questions"
+        - label: "Point to a file"
+          description: "I have a document with my idea written up"
+        - label: "Search for idea files"
+          description: "Search the ideas/ directory for previously generated ideas"
+      multiSelect: false
+```
+
+- If **"Point to a file"**: prompt for the path via `AskUserQuestion`, then continue to Path B.
+- If **"Search for idea files"**: use `Glob` to find candidates (`ideas/**/idea-*.md`), present results via `AskUserQuestion`, then continue to Path B with the selected file.
+- If **"Describe it here"**: continue to the **Idea Interview** below.
+
+### Idea Interview
+
+When the user chooses to describe their idea conversationally, conduct a short interview to gather enough detail for validation. The interview has two rounds.
+
+#### Round 1: Core Concept
+
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "The Idea"
+      question: "Describe your idea. What does it do, and what problem does it solve?"
+      options:
+        - label: "It's a product/tool"
+          description: "A software product, app, API, or developer tool"
+        - label: "It's a service/platform"
+          description: "A marketplace, agency model, SaaS platform, or managed service"
+        - label: "It's content/community"
+          description: "A media product, newsletter, community, course, or info product"
+      multiSelect: false
+```
+
+The user's free-text answer and selected option together form the idea description. After receiving their response, assess whether enough detail was provided to proceed. Enough detail means you have a clear understanding of:
+
+- What the product/service is
+- What problem it solves
+- Who it is for (even if vaguely stated)
+
+If the response is too vague (e.g., "an app for freelancers" with no further detail), ask a clarifying follow-up before moving to Round 2:
+
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "Tell Me More"
+      question: "Can you elaborate on what specifically it does? What would a user do with it day-to-day?"
+      options:
+        - label: "Let me explain more"
+          description: "I'll give a more detailed description"
+        - label: "I'm still figuring it out"
+          description: "I have the general direction but not the specifics yet"
+      multiSelect: false
+```
+
+If the user selects "I'm still figuring it out," work with what was given and note gaps in the validation report.
+
+#### Round 2: Business Model & Target Customer
+
+Once the core concept is understood, dig into the business specifics:
+
+```yaml
+AskUserQuestion:
+  questions:
+    - header: "Target Customer"
+      question: "Who is the target customer? Be as specific as you can -- job title, company size, situation, or demographic."
+      options:
+        - label: "Individual consumers"
+          description: "B2C — everyday people or a specific demographic"
+        - label: "Small businesses / freelancers"
+          description: "B2B SMB — solo operators, agencies, or small teams"
+        - label: "Mid-market / enterprise"
+          description: "B2B — companies with dedicated budgets and buying processes"
+        - label: "Developers / technical users"
+          description: "DevTools — engineers, data scientists, or technical teams"
+      multiSelect: false
+    - header: "Revenue Model"
+      question: "How would this make money? Pick the closest model and add details in the text box (pricing thoughts, free tier, etc.)."
+      options:
+        - label: "Subscription (SaaS)"
+          description: "Monthly or annual recurring fee"
+        - label: "One-time purchase"
+          description: "Pay once for the product or a license"
+        - label: "Usage-based / pay-per-use"
+          description: "Charge based on consumption, API calls, transactions, etc."
+        - label: "Marketplace / commission"
+          description: "Take a cut of transactions between buyers and sellers"
+      multiSelect: false
+    - header: "Competition"
+      question: "Do you know of any existing competitors or alternatives? List names or describe them, or say 'not sure'."
+      options:
+        - label: "Yes, I know some"
+          description: "I'll list competitors or alternatives I'm aware of"
+        - label: "Not sure"
+          description: "I haven't researched the competition yet"
+      multiSelect: false
+```
+
+#### Synthesize Into Idea Document
+
+After the interview, synthesize the user's responses into a structured idea document and write it to `ideas/ad-hoc/idea-{timestamp}.md` (using format `YYYYMMDD-HHMMSS` for the timestamp). The document should follow this structure:
+
+```markdown
+# {Idea Name}
+
+> {One-line summary derived from the user's description}
+
+## Overview
+
+{2-3 paragraph description synthesized from the interview responses}
+
+## Target Customer
+
+{Target customer description from Round 2}
+
+## Revenue Model
+
+{Revenue model and any pricing details from Round 2}
+
+## Known Competitors
+
+{Competitors listed by the user, or "No competitors identified by the user — to be researched during validation."}
+
+---
+
+*Source: Conversational interview via /validate-idea | {YYYY-MM-DD}*
+```
+
+Derive a clear, concise idea name from the user's description. Do not use generic names like "My Idea" — synthesize what they described into a proper product concept name.
+
+After writing the file, treat it as an external idea and continue to **Extract Key Details** below.
+
+### Path B: Argument Provided
 
 Read the idea document at the provided `idea-path`:
 
@@ -91,31 +231,30 @@ Read the idea document at the provided `idea-path`:
 Read: {idea-path}
 ```
 
-If the file does not exist or cannot be read, use `AskUserQuestion` to prompt for the correct path:
+If the file does not exist or cannot be read, use `AskUserQuestion` to offer alternatives:
 
 ```yaml
 AskUserQuestion:
   questions:
-    - header: "Idea Document Not Found"
-      question: "The file at '{idea-path}' could not be found. Please provide the correct path to the idea document you want to validate."
+    - header: "File Not Found"
+      question: "The file at '{idea-path}' could not be found. How would you like to proceed?"
       options:
-        - label: "Let me type the path"
+        - label: "Let me fix the path"
           description: "I'll provide the correct file path"
+        - label: "Describe my idea instead"
+          description: "I'll explain my idea and you'll ask follow-up questions"
         - label: "Search for idea files"
           description: "Search the ideas/ directory for available idea documents"
+      multiSelect: false
 ```
 
-If the user selects "Search for idea files," use `Glob` to find candidate files:
-
-```
-Glob: ideas/**/idea-*.md
-```
-
-Present the results via `AskUserQuestion` and let the user select the correct file.
+- If **"Describe my idea instead"**: go to the **Idea Interview** above.
+- If **"Search for idea files"**: use `Glob` (`ideas/**/idea-*.md`), present results, and read the selected file.
+- If **"Let me fix the path"**: prompt for the corrected path and retry.
 
 ### Extract Key Details
 
-From the idea document, extract:
+From the idea document (whether loaded from file or synthesized from interview), extract:
 
 - **Idea name** and one-line summary
 - **Market slug** and market name (from the file path or document content)
@@ -133,6 +272,7 @@ Determine whether the idea was generated by `/generate-idea` or is an external i
 - The idea document does not follow the `idea-NNN.md` format
 - No corresponding `MARKET.md` exists in the parent directory
 - The idea document lacks a Scoring section or Personal Fit assessment
+- The idea was gathered via the conversational interview
 - The user explicitly states the idea is not from `/generate-idea`
 
 If the idea is external:
@@ -150,7 +290,7 @@ Read: ideas/{market-slug}/MARKET.md
 
 This provides market size estimates, trend data, competitive landscape, and community targets already gathered during idea generation. Use this as a starting point -- Phase 3 will deepen the research.
 
-If no `MARKET.md` exists (external idea), all market research will be conducted from scratch in Phase 3.
+If no `MARKET.md` exists (external idea or interview-sourced idea), all market research will be conducted from scratch in Phase 3.
 
 ---
 
@@ -718,11 +858,16 @@ skill: generate-idea
 
 ### Invalid Idea Path
 
-If the `idea-path` argument points to a file that does not exist or cannot be read:
+Handled in Phase 1, Path B. The user is offered three options: fix the path, describe the idea conversationally, or search for existing idea files.
 
-1. Use `AskUserQuestion` to prompt the user for the correct path
-2. Search for idea files via `Glob` and present options if the user requests it
-3. Do not proceed until a valid, readable idea document is provided
+### Interview-Sourced Ideas with Sparse Detail
+
+If the user provides very little detail during the interview and selects "I'm still figuring it out," proceed with validation but:
+
+1. Note all gaps in the validation report's "Data Gaps and Limitations" section
+2. Cap confidence at Low
+3. Frame the validation as exploratory rather than definitive
+4. Recommend running `/generate-idea` for a more structured discovery process
 
 ### Market Researcher Agent Failure
 
@@ -745,9 +890,9 @@ If web research yields limited or no useful data:
 4. **Recommend follow-up research** in the "Data Gaps and Limitations" section
 5. **Include the idea's self-reported data** (from the idea document) with a note that it is unverified
 
-### External Ideas with No Context
+### External or Interview-Sourced Ideas with No Context
 
-When validating an external idea with no prior research, no user profile, and no MARKET.md:
+When validating an idea with no prior research, no user profile, and no MARKET.md (whether from a file or the conversational interview):
 
 1. Conduct all research from scratch via the market-researcher agent
 2. Skip founder-specific analysis (Personal Fit, founder skills, network advantage)
