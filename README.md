@@ -86,3 +86,7 @@ ideas/
     ├── MARKET.md
     └── idea-001.md
 ```
+
+## License
+
+MIT

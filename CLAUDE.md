@@ -8,15 +8,20 @@ Claude Code plugin marketplace for entrepreneurial pursuits. Contains plugins th
 
 ```
 venture-alchemy/
-├── specs/                          # Specification documents
-│   └── {name}-SPEC.md              # PRD specs (input to /create-tasks)
+├── internal/
+│   └── specs/                      # Specification documents
+│       └── {name}-SPEC.md          # PRD specs (input to /create-tasks)
 ├── startup-idea-generator/         # Plugin: idea generation pipeline
 │   ├── plugin.yaml                 # Plugin manifest (name, version, skills)
 │   ├── README.md
 │   ├── skills/                     # Slash-command skills (SKILL.md)
 │   ├── agents/                     # Agent definitions (.md)
 │   └── references/                 # Shared cross-skill references
-└── CLAUDE.md
+├── CHANGELOG.md
+├── CLAUDE.md
+├── CODEOWNERS
+├── LICENSE
+└── README.md
 ```
 
 ## Plugin Architecture Conventions
