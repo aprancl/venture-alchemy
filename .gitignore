@@ -16,7 +16,7 @@ Thumbs.db
 *.pem
 
 # Local Claude settings
-.claude/settings.local.json
+.claude/
 
 # Generated output
 ideas/
