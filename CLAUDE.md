@@ -8,15 +8,18 @@ Claude Code plugin marketplace for entrepreneurial pursuits. Contains plugins th
 
 ```
 venture-alchemy/
+├── claude/                         # Plugin marketplace directory
+│   ├── .claude/
+│   │   └── marketplace.json        # Plugin registry manifest
+│   └── venture-lab/                # Plugin: idea generation pipeline
+│       ├── plugin.yaml             # Plugin manifest (name, version, skills)
+│       ├── README.md
+│       ├── skills/                 # Slash-command skills (SKILL.md)
+│       ├── agents/                 # Agent definitions (.md)
+│       └── references/             # Shared cross-skill references
 ├── internal/
 │   └── specs/                      # Specification documents
 │       └── {name}-SPEC.md          # PRD specs (input to /create-tasks)
-├── startup-idea-generator/         # Plugin: idea generation pipeline
-│   ├── plugin.yaml                 # Plugin manifest (name, version, skills)
-│   ├── README.md
-│   ├── skills/                     # Slash-command skills (SKILL.md)
-│   ├── agents/                     # Agent definitions (.md)
-│   └── references/                 # Shared cross-skill references
 ├── CHANGELOG.md
 ├── CLAUDE.md
 ├── CODEOWNERS
@@ -28,7 +31,7 @@ venture-alchemy/
 
 ### Directory Layout
 
-Each plugin follows: `{plugin-name}/` containing `plugin.yaml`, `skills/`, `agents/`, `references/`, and `README.md`.
+Plugins live in `claude/{plugin-name}/` containing `plugin.yaml`, `skills/`, `agents/`, `references/`, and `README.md`. The `claude/.claude/marketplace.json` registry lists all available plugins.
 
 ### SKILL.md Format
 
@@ -69,4 +72,4 @@ Plugin versions are tracked in `plugin.yaml` using semantic versioning:
 
 | Plugin | Version | Skills | Status |
 |--------|---------|--------|--------|
-| startup-idea-generator | 0.1.0 | `/generate-idea`, `/validate-idea`, `/plan-execution` | Complete |
+| venture-lab | 0.1.0 | `/generate-idea`, `/validate-idea`, `/plan-execution` | Complete |

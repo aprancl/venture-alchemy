@@ -205,4 +205,4 @@
 
 ---
 
-*Validated by [startup-idea-generator](../../README.md) | Market: {market-slug} | Idea: idea-{NNN} | {YYYY-MM-DD}*
+*Validated by [venture-lab](../../README.md) | Market: {market-slug} | Idea: idea-{NNN} | {YYYY-MM-DD}*

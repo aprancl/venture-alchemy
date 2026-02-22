@@ -29,17 +29,17 @@ Clone this repo and install it as a Claude Code plugin:
 
 ```bash
 git clone https://github.com/yourusername/venture-alchemy.git
-claude mcp add-plugin venture-alchemy ./venture-alchemy/startup-idea-generator
+claude mcp add-plugin venture-alchemy ./venture-alchemy/venture-lab
 ```
 
-Or add it manually to your Claude Code settings by pointing to the `startup-idea-generator` directory.
+Or add it manually to your Claude Code settings by pointing to the `venture-lab` directory.
 
 ### Run your first idea generation
 
 Open Claude Code in any project directory and run:
 
 ```
-/startup-idea-generator:generate-idea
+/venture-lab:generate-idea
 ```
 
 The skill will walk you through:
@@ -55,7 +55,7 @@ At the end you can choose to continue into validation or execution planning with
 ### Validate an idea
 
 ```
-/startup-idea-generator:validate-idea ideas/developer-tools/idea-001.md
+/venture-lab:validate-idea ideas/developer-tools/idea-001.md
 ```
 
 Produces a validation report with SWOT analysis, competitor comparison, risk assessment, and a go/no-go recommendation.
@@ -63,7 +63,7 @@ Produces a validation report with SWOT analysis, competitor comparison, risk ass
 ### Plan execution
 
 ```
-/startup-idea-generator:plan-execution ideas/developer-tools/idea-001.md
+/venture-lab:plan-execution ideas/developer-tools/idea-001.md
 ```
 
 Produces an execution plan with MVP scope, milestone breakdown, pricing, and a customer acquisition strategy designed for solo developers. The plan is structured to feed directly into `/create-spec` if you use [agent-alchemy](https://github.com/agent-alchemy) for spec-driven development.
