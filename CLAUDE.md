@@ -11,11 +11,11 @@ venture-alchemy/
 ├── specs/                          # Specification documents
 │   └── {name}-SPEC.md              # PRD specs (input to /create-tasks)
 ├── startup-idea-generator/         # Plugin: idea generation pipeline
-│   └── 0.1.0/                      # Versioned plugin directory
-│       ├── README.md
-│       ├── skills/                  # Slash-command skills (SKILL.md)
-│       ├── agents/                  # Agent definitions (.md)
-│       └── references/              # Shared cross-skill references
+│   ├── plugin.yaml                 # Plugin manifest (name, version, skills)
+│   ├── README.md
+│   ├── skills/                     # Slash-command skills (SKILL.md)
+│   ├── agents/                     # Agent definitions (.md)
+│   └── references/                 # Shared cross-skill references
 └── CLAUDE.md
 ```
 
@@ -23,7 +23,7 @@ venture-alchemy/
 
 ### Directory Layout
 
-Each plugin follows: `{plugin-name}/{semver}/` containing `skills/`, `agents/`, `references/`, and `README.md`.
+Each plugin follows: `{plugin-name}/` containing `plugin.yaml`, `skills/`, `agents/`, `references/`, and `README.md`.
 
 ### SKILL.md Format
 
@@ -55,7 +55,7 @@ Each plugin follows: `{plugin-name}/{semver}/` containing `skills/`, `agents/`, 
 
 ## Versioning
 
-Plugins use semantic versioning:
+Plugin versions are tracked in `plugin.yaml` using semantic versioning:
 - **Patch** (0.1.x): Bug fixes and modifications
 - **Minor** (0.x.0): Smaller additions
 - **Major** (x.0.0): Larger additions or breaking changes

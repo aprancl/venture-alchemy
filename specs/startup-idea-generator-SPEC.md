@@ -321,40 +321,40 @@ The plugin follows the agent-alchemy architecture pattern: skills defined via `S
 
 ### 7.5 Plugin Directory Structure
 
-**Versioning Convention**: Semantic versioning (semver). Patch versions (0.1.x) for modifications to existing capability; minor versions (0.x.0) for adding smaller-scale capabilities; major versions (x.0.0) for adding larger capabilities or breaking changes.
+**Versioning Convention**: Versions are tracked in `plugin.yaml` using semantic versioning (semver). Patch versions (0.1.x) for modifications to existing capability; minor versions (0.x.0) for adding smaller-scale capabilities; major versions (x.0.0) for adding larger capabilities or breaking changes.
 
 ```
 venture-alchemy/
 └── startup-idea-generator/
-    └── 0.1.0/
-        ├── skills/
-        │   ├── generate-idea/
-        │   │   ├── SKILL.md                    # Hub skill - interview + idea generation
-        │   │   └── references/
-        │   │       ├── interview-questions.md   # User profiling question bank
-        │   │       ├── market-categories.md     # Market taxonomy and discovery patterns
-        │   │       ├── scoring-rubric.md        # Formal 4-dimension scoring criteria
-        │   │       ├── anti-slop-filters.md     # Contrarian + freshness filter logic
-        │   │       └── templates/
-        │   │           ├── idea-document.md      # Template for idea output files
-        │   │           └── market-analysis.md    # Template for MARKET.md files
-        │   ├── validate-idea/
-        │   │   ├── SKILL.md                     # Deep validation skill
-        │   │   └── references/
-        │   │       ├── validation-criteria.md    # SWOT, competitor analysis patterns
-        │   │       └── templates/
-        │   │           └── validation-report.md  # Template for validation output
-        │   └── plan-execution/
-        │       ├── SKILL.md                     # Execution planning skill
-        │       └── references/
-        │           ├── planning-patterns.md      # MVP scoping, milestone patterns
-        │           └── templates/
-        │               └── execution-plan.md     # Template for plan output
-        ├── agents/
-        │   └── market-researcher.md             # Web research agent definition
-        ├── references/                          # Shared plugin-level references
-        │   └── idea-quality-principles.md       # Cross-skill quality standards
-        └── README.md                            # Plugin overview and usage
+    ├── plugin.yaml                              # Plugin manifest (name, version, skills)
+    ├── skills/
+    │   ├── generate-idea/
+    │   │   ├── SKILL.md                         # Hub skill - interview + idea generation
+    │   │   └── references/
+    │   │       ├── interview-questions.md        # User profiling question bank
+    │   │       ├── market-categories.md          # Market taxonomy and discovery patterns
+    │   │       ├── scoring-rubric.md             # Formal 4-dimension scoring criteria
+    │   │       ├── anti-slop-filters.md          # Contrarian + freshness filter logic
+    │   │       └── templates/
+    │   │           ├── idea-document.md           # Template for idea output files
+    │   │           └── market-analysis.md         # Template for MARKET.md files
+    │   ├── validate-idea/
+    │   │   ├── SKILL.md                          # Deep validation skill
+    │   │   └── references/
+    │   │       ├── validation-criteria.md         # SWOT, competitor analysis patterns
+    │   │       └── templates/
+    │   │           └── validation-report.md       # Template for validation output
+    │   └── plan-execution/
+    │       ├── SKILL.md                          # Execution planning skill
+    │       └── references/
+    │           ├── planning-patterns.md           # MVP scoping, milestone patterns
+    │           └── templates/
+    │               └── execution-plan.md          # Template for plan output
+    ├── agents/
+    │   └── market-researcher.md                  # Web research agent definition
+    ├── references/                               # Shared plugin-level references
+    │   └── idea-quality-principles.md            # Cross-skill quality standards
+    └── README.md                                 # Plugin overview and usage
 ```
 
 ### 7.6 Output Directory Structure

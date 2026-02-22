@@ -37,28 +37,28 @@ A Claude Code plugin that helps users generate startup and side-project ideas th
 
 ```
 startup-idea-generator/
-└── 0.1.0/
-    ├── skills/
-    │   ├── generate-idea/
-    │   │   ├── SKILL.md                    # Hub skill — interview + idea generation (11 phases)
-    │   │   └── references/
-    │   │       ├── interview-questions.md   # User profiling question bank (8 categories)
-    │   │       ├── market-categories.md     # Market taxonomy and discovery patterns
-    │   │       ├── scoring-rubric.md        # 4-dimension scoring criteria
-    │   │       ├── anti-slop-filters.md     # Three-layer anti-slop pipeline
-    │   │       └── templates/
-    │   │           ├── idea-document.md     # Template for idea output files
-    │   │           └── market-analysis.md   # Template for MARKET.md files
-    │   ├── validate-idea/
-    │   │   └── references/
-    │   │       └── templates/
-    │   └── plan-execution/
-    │       └── references/
-    │           └── templates/
-    ├── agents/
-    │   └── market-researcher.md            # Web research agent definition
-    ├── references/                         # Shared plugin-level references
-    └── README.md
+├── plugin.yaml                            # Plugin manifest (name, version, skills)
+├── skills/
+│   ├── generate-idea/
+│   │   ├── SKILL.md                       # Hub skill — interview + idea generation (11 phases)
+│   │   └── references/
+│   │       ├── interview-questions.md     # User profiling question bank (8 categories)
+│   │       ├── market-categories.md       # Market taxonomy and discovery patterns
+│   │       ├── scoring-rubric.md          # 4-dimension scoring criteria
+│   │       ├── anti-slop-filters.md       # Three-layer anti-slop pipeline
+│   │       └── templates/
+│   │           ├── idea-document.md       # Template for idea output files
+│   │           └── market-analysis.md     # Template for MARKET.md files
+│   ├── validate-idea/
+│   │   └── references/
+│   │       └── templates/
+│   └── plan-execution/
+│       └── references/
+│           └── templates/
+├── agents/
+│   └── market-researcher.md              # Web research agent definition
+├── references/                           # Shared plugin-level references
+└── README.md
 ```
 
 ## Usage

@@ -29,10 +29,10 @@ Clone this repo and install it as a Claude Code plugin:
 
 ```bash
 git clone https://github.com/yourusername/venture-alchemy.git
-claude mcp add-plugin venture-alchemy ./venture-alchemy/startup-idea-generator/0.1.0
+claude mcp add-plugin venture-alchemy ./venture-alchemy/startup-idea-generator
 ```
 
-Or add it manually to your Claude Code settings by pointing to the `startup-idea-generator/0.1.0` directory.
+Or add it manually to your Claude Code settings by pointing to the `startup-idea-generator` directory.
 
 ### Run your first idea generation
 

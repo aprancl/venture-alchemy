@@ -1,0 +1,7 @@
+name: startup-idea-generator
+version: 0.1.0
+description: Interview-driven startup idea generation, validation, and execution planning pipeline
+skills:
+  - generate-idea
+  - validate-idea
+  - plan-execution
